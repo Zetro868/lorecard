@@ -1,5 +1,6 @@
 from litestar import Controller, get
 from litestar.exceptions import NotFoundException
+from litestar.params import FromPath
 
 from db.analytics import ProjectAnalytics, get_project_analytics
 from db.common import SingleResponse
@@ -14,7 +15,7 @@ class AnalyticsController(Controller):
 
     @get("/projects/{project_id:str}")
     async def get_analytics_for_project(
-        self, project_id: str
+        self, project_id: FromPath[str]
     ) -> SingleResponse[ProjectAnalytics]:
         """Get aggregated cost and usage statistics for a project."""
         logger.debug(f"Getting analytics for project {project_id}")

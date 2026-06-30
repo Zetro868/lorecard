@@ -50,8 +50,11 @@ async def credential_id(client_test: AsyncTestClient) -> UUID:
     """Fixture to create a default credential and return its ID."""
     credential_payload = {
         "name": "Test Credential",
-        "provider_type": "openrouter",
-        "values": {"api_key": os.getenv("OPENROUTER_API_KEY")},
+        "provider_type": "openai_compatible",
+        "values": {
+            "api_key": os.getenv("DEEPSEEK_API_KEY"),
+            "base_url": "https://api.deepseek.com",
+        },
     }
     response = await client_test.post("/api/credentials", json=credential_payload)
     assert response.status_code == 201
@@ -74,7 +77,7 @@ def lorebook_project_payload(credential_id: UUID) -> CreateProject:
             character_field_regeneration=character_field_regeneration_prompt,
         ),
         credential_id=credential_id,
-        model_name="google/gemini-2.5-flash",
+        model_name="deepseek-v4-flash",
         model_parameters={"temperature": 0.7},
     )
 
@@ -95,7 +98,7 @@ def character_project_payload(credential_id: UUID) -> CreateProject:
             selector_generation=selector_prompt,
         ),
         credential_id=credential_id,
-        model_name="google/gemini-2.5-flash",
+        model_name="deepseek-v4-flash",
         model_parameters={"temperature": 0.7},
     )
 

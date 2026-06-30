@@ -118,7 +118,7 @@ class PostgresDB(AsyncDB):
     async def connect(self):
         if not self._pool:
             self._pool = AsyncConnectionPool(
-                conninfo=self._dsn, min_size=10, max_size=300
+                conninfo=self._dsn, min_size=10, max_size=300, open=False
             )
             await self._pool.open()
 

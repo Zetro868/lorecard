@@ -1,4 +1,5 @@
 import asyncio
+import os
 import sys
 import pytest
 import pytest_asyncio
@@ -9,6 +10,8 @@ from db.connection import set_db_connection, close_database
 from db.database import PostgresDB, SQLiteDB, AsyncDB
 from db.migration_runner import apply_migrations
 from main import create_app
+
+os.environ.setdefault("TESTCONTAINERS_RYUK_DISABLED", "true")
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -26,8 +29,9 @@ def postgres_container():
 
 
 @pytest_asyncio.fixture(scope="session")
-async def db(db_type: str, postgres_container: PostgresContainer, tmp_path_factory):
+async def db(db_type: str, request, tmp_path_factory):
     if db_type == "postgres":
+        postgres_container = request.getfixturevalue("postgres_container")
         dsn = postgres_container.get_connection_url().replace("+psycopg2", "")
         db_instance = PostgresDB(dsn)
     elif db_type == "sqlite":

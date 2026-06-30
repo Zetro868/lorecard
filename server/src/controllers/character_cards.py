@@ -4,7 +4,7 @@ import json
 from uuid import UUID
 from litestar import Controller, get, patch
 from litestar.exceptions import NotFoundException
-from litestar.params import Body
+from litestar.params import FromPath, JSONBody
 from litestar.response import Response
 from PIL import Image, PngImagePlugin
 
@@ -28,7 +28,7 @@ class CharacterCardController(Controller):
 
     @get("/")
     async def get_character_card(
-        self, project_id: str
+        self, project_id: FromPath[str]
     ) -> SingleResponse[CharacterCard]:
         """Get the character card for a project."""
         card = await get_character_card_by_project(project_id)
@@ -46,7 +46,7 @@ class CharacterCardController(Controller):
 
     @patch("/")
     async def update_character_card(
-        self, project_id: str, data: UpdateCharacterCard = Body()
+        self, project_id: FromPath[str], data: JSONBody[UpdateCharacterCard]
     ) -> SingleResponse[CharacterCard]:
         """Update a character card for a project."""
         project = await db_get_project(project_id)
@@ -71,7 +71,7 @@ class CharacterCardController(Controller):
         return SingleResponse(data=card)
 
     @get("/export")
-    async def export_character_card(self, project_id: str) -> Response:
+    async def export_character_card(self, project_id: FromPath[str]) -> Response:
         """Export the character card as a v2 PNG file."""
         card = await get_character_card_by_project(project_id)
         if not card or not card.name:

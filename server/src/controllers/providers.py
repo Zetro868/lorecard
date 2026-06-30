@@ -4,6 +4,7 @@ from typing import List, Optional
 from uuid import UUID
 from litestar import Controller, get, post
 from litestar.exceptions import HTTPException, NotFoundException
+from litestar.params import FromQuery, JSONBody
 from pydantic import BaseModel, Field
 from logging_config import get_logger
 from providers.index import (
@@ -52,7 +53,9 @@ class ProviderController(Controller):
     path = "/providers"
 
     @get(path="/")
-    async def get_providers(self, include_models: bool = True) -> List[ProviderInfo]:
+    async def get_providers(
+        self, include_models: FromQuery[bool] = True
+    ) -> List[ProviderInfo]:
         logger.debug("Listing all available providers and their models")
 
         all_credentials = await list_credentials()
@@ -136,7 +139,9 @@ class ProviderController(Controller):
         return results
 
     @post(path="/models")
-    async def get_provider_models(self, data: TestCredentialPayload) -> List[ModelInfo]:
+    async def get_provider_models(
+        self, data: JSONBody[TestCredentialPayload]
+    ) -> List[ModelInfo]:
         """Dynamically fetches models using provided, unsaved credential values."""
         logger.info(f"Fetching models for provider: {data.provider_type}")
         try:
@@ -154,7 +159,7 @@ class ProviderController(Controller):
 
     @post(path="/test")
     async def test_credential(
-        self, data: TestCredentialPayload
+        self, data: JSONBody[TestCredentialPayload]
     ) -> TestCredentialResult:
         logger.info(
             f"Testing credential for provider: {data.provider_type}, model: {data.model_name}, mode: {data.json_mode}"

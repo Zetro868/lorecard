@@ -15,6 +15,7 @@ import os  # noqa: E402
 
 import uvicorn  # noqa: E402
 from litestar import Litestar, asgi, get  # noqa: E402
+from litestar.params import FromPath  # noqa: E402
 from litestar.router import Router  # noqa: E402
 from litestar.exceptions import ValidationException  # noqa: E402
 from litestar.config.cors import CORSConfig  # noqa: E402
@@ -187,14 +188,14 @@ assets_app = StaticFiles(
 )
 
 
-@asgi(path="/assets", is_static=True)
+@asgi(path="/assets", is_static=True, copy_scope=True)
 async def serve_assets(scope: Scope, receive: Receive, send: Send) -> None:
     """Handles serving static assets from the /assets directory."""
     await assets_app(scope, receive, send)
 
 
 @get(path=["/", "/{path:path}"])
-async def spa_fallback(path: str | None = None) -> ASGIFileResponse:
+async def spa_fallback(path: FromPath[str | None] = None) -> ASGIFileResponse:
     """
     Serves the index.html file for all non-API and non-asset routes.
     This is the catch-all for the Single-Page Application.

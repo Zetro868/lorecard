@@ -52,7 +52,7 @@ class OpenAICompatibleRequestBody(BaseModel):
     messages: List[ChatMessage]
     temperature: Optional[float] = Field(None, ge=0, le=2)
     reasoning: Optional[Reasoning] = None
-    response_format: Optional[OpenAICompatibleResponseFormat] = None
+    response_format: Optional[Dict[str, Any]] = None
 
     @staticmethod
     def from_common_request(
@@ -60,7 +60,7 @@ class OpenAICompatibleRequestBody(BaseModel):
     ) -> "OpenAICompatibleRequestBody":
         response_format = None
         if common_request.response_format:
-            schema = common_request.response_format.schema_value
+            schema = common_request.response_format.schema_value.copy()
             # Forcing all properties to be required for compatibility.
             if "properties" in schema:
                 schema["required"] = list(schema["properties"].keys())
@@ -70,7 +70,8 @@ class OpenAICompatibleRequestBody(BaseModel):
                     name=common_request.response_format.name,
                     schema_value=schema,
                 )
-            )
+            ).model_dump(by_alias=True)
+
         return OpenAICompatibleRequestBody(
             model=common_request.model,
             messages=common_request.messages,
@@ -155,6 +156,15 @@ class OpenAICompatibleClient(BaseProvider):
     ) -> Union[ChatCompletionResponse, ChatCompletionErrorResponse]:
         request_body = OpenAICompatibleRequestBody.from_common_request(request)
         payload = request_body.model_dump(exclude_none=True, by_alias=True)
+        if (
+            self.base_url.rstrip("/").lower() == "https://api.deepseek.com"
+            and request.response_format
+        ):
+            payload["response_format"] = {"type": "json_object"}
+            if not any("json" in message.content.lower() for message in request.messages):
+                payload["messages"] = [
+                    ChatMessage(role="system", content="Respond in JSON.").model_dump()
+                ] + payload["messages"]
 
         logger.debug("--- Sending OpenAI Compatible Payload ---")
         logger.debug(json.dumps(payload, indent=2))

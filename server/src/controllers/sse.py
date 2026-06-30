@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from typing import Dict, Set, AsyncGenerator
 from litestar import Controller, get
+from litestar.params import FromPath
 from litestar.response import ServerSentEvent
 from logging_config import get_logger
 from pydantic import BaseModel
@@ -26,7 +27,9 @@ class SSEController(Controller):
     path = "/sse"
 
     @get("/subscribe/{project_id:str}")
-    async def subscribe_to_project_events(self, project_id: str) -> ServerSentEvent:
+    async def subscribe_to_project_events(
+        self, project_id: FromPath[str]
+    ) -> ServerSentEvent:
         """
         Subscribe to real-time events for a specific project.
         """

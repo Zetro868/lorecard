@@ -1,6 +1,6 @@
 from litestar import Controller, get, post, patch, delete
 from litestar.exceptions import NotFoundException
-from litestar.params import Body
+from litestar.params import FromPath, FromQuery, JSONBody
 from pydantic import BaseModel
 from typing import Optional
 
@@ -45,7 +45,7 @@ class ProjectController(Controller):
 
     @post("/")
     async def create_project(
-        self, data: CreateProject = Body()
+        self, data: JSONBody[CreateProject]
     ) -> SingleResponse[Project]:
         """Create a new project."""
         logger.debug(f"Creating project {data.id} of type {data.project_type}")
@@ -55,13 +55,13 @@ class ProjectController(Controller):
     @get("/")
     async def list_projects(
         self,
-        limit: int = 50,
-        offset: int = 0,
-        q: Optional[str] = None,
-        status: Optional[ProjectStatus] = None,
-        project_type: Optional[ProjectType] = None,
-        sort_by: str = "updated_at",
-        sort_direction: str = "desc",
+        limit: FromQuery[int] = 50,
+        offset: FromQuery[int] = 0,
+        q: FromQuery[Optional[str]] = None,
+        status: FromQuery[Optional[ProjectStatus]] = None,
+        project_type: FromQuery[Optional[ProjectType]] = None,
+        sort_by: FromQuery[str] = "updated_at",
+        sort_direction: FromQuery[str] = "desc",
     ) -> PaginatedResponse[Project]:
         """List all projects with pagination."""
         logger.debug("Listing all projects")
@@ -77,7 +77,10 @@ class ProjectController(Controller):
 
     @get("/{project_id:str}/links")
     async def list_project_links(
-        self, project_id: str, limit: int = 100, offset: int = 0
+        self,
+        project_id: FromPath[str],
+        limit: FromQuery[int] = 100,
+        offset: FromQuery[int] = 0,
     ) -> PaginatedResponse[Link]:
         """List all links for a project with pagination."""
         logger.debug(f"Listing links for project {project_id}")
@@ -85,7 +88,7 @@ class ProjectController(Controller):
 
     @get("/{project_id:str}/links/processable-count")
     async def get_processable_links_count(
-        self, project_id: str
+        self, project_id: FromPath[str]
     ) -> SingleResponse[CountResponse]:
         """Get the count of processable (pending or failed) links for a project."""
         logger.debug(f"Counting processable links for project {project_id}")
@@ -95,10 +98,10 @@ class ProjectController(Controller):
     @get("/{project_id:str}/entries")
     async def list_project_entries(
         self,
-        project_id: str,
-        limit: int = 100,
-        offset: int = 0,
-        q: Optional[str] = None,
+        project_id: FromPath[str],
+        limit: FromQuery[int] = 100,
+        offset: FromQuery[int] = 0,
+        q: FromQuery[Optional[str]] = None,
     ) -> PaginatedResponse[LorebookEntry]:
         """List all lorebook entries for a project with pagination and optional search."""
         logger.debug(f"Listing entries for project {project_id}")
@@ -108,14 +111,19 @@ class ProjectController(Controller):
 
     @get("/{project_id:str}/logs")
     async def list_project_api_logs(
-        self, project_id: str, limit: int = 100, offset: int = 0
+        self,
+        project_id: FromPath[str],
+        limit: FromQuery[int] = 100,
+        offset: FromQuery[int] = 0,
     ) -> PaginatedResponse[ApiRequestLog]:
         """List all API request logs for a project with pagination."""
         logger.debug(f"Listing API logs for project {project_id}")
         return await db_list_logs_by_project_paginated(project_id, limit, offset)
 
     @get("/{project_id:str}")
-    async def get_project(self, project_id: str) -> SingleResponse[Project]:
+    async def get_project(
+        self, project_id: FromPath[str]
+    ) -> SingleResponse[Project]:
         """Retrieve a single project by its ID."""
         logger.debug(f"Retrieving project {project_id}")
         project = await db_get_project(project_id)
@@ -125,7 +133,7 @@ class ProjectController(Controller):
 
     @patch("/{project_id:str}")
     async def update_project(
-        self, project_id: str, data: UpdateProject = Body()
+        self, project_id: FromPath[str], data: JSONBody[UpdateProject]
     ) -> SingleResponse[Project]:
         """Update a project."""
         logger.debug(f"Updating project {project_id}")
@@ -135,7 +143,7 @@ class ProjectController(Controller):
         return SingleResponse(data=project)
 
     @delete("/{project_id:str}")
-    async def delete_project(self, project_id: str) -> None:
+    async def delete_project(self, project_id: FromPath[str]) -> None:
         """Delete a project."""
         logger.debug(f"Deleting project {project_id}")
         await db_delete_project(project_id)
@@ -143,7 +151,7 @@ class ProjectController(Controller):
     @get("/{project_id:str}/lorebook/download")
     async def download_project_lorebook(
         self,
-        project_id: str,
+        project_id: FromPath[str],
     ) -> dict:
         """Get the lorebook in downloadable format with numbered entries."""
         project = await db_get_project(project_id)

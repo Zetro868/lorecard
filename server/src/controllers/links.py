@@ -1,6 +1,6 @@
 from uuid import UUID
 from litestar import Controller, post
-from litestar.params import Body
+from litestar.params import FromPath, JSONBody
 from pydantic import BaseModel, Field
 
 from db.links import delete_links_bulk as db_delete_links_bulk
@@ -18,7 +18,7 @@ class LinksController(Controller):
 
     @post("/delete-bulk")
     async def delete_links_bulk(
-        self, project_id: str, data: BulkDeleteLinksPayload = Body()
+        self, project_id: FromPath[str], data: JSONBody[BulkDeleteLinksPayload]
     ) -> None:
         """Deletes multiple links for a project in a single request."""
         logger.debug(

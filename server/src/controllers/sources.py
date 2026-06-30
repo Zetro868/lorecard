@@ -1,7 +1,7 @@
 from uuid import UUID
 from litestar import Controller, get, post, patch, delete
 from litestar.exceptions import NotFoundException, HTTPException
-from litestar.params import Body
+from litestar.params import FromPath, JSONBody
 from pydantic import BaseModel
 from typing import List, Optional
 from urllib.parse import urljoin
@@ -52,20 +52,22 @@ class SourceController(Controller):
     path = "/projects/{project_id:str}/sources"
 
     @get("/")
-    async def list_project_sources(self, project_id: str) -> list[ProjectSource]:
+    async def list_project_sources(
+        self, project_id: FromPath[str]
+    ) -> list[ProjectSource]:
         logger.debug(f"Listing sources for project {project_id}")
         return await list_sources_by_project(project_id)
 
     @get("/hierarchy")
     async def get_project_source_hierarchy(
-        self, project_id: str
+        self, project_id: FromPath[str]
     ) -> list[ProjectSourceHierarchy]:
         logger.debug(f"Getting source hierarchy for project {project_id}")
         return await get_source_hierarchy_for_project(project_id)
 
     @post("/")
     async def add_project_source(
-        self, project_id: str, data: dict = Body()
+        self, project_id: FromPath[str], data: JSONBody[dict]
     ) -> SingleResponse[ProjectSource]:
         logger.debug(f"Adding source to project {project_id}")
         source_data = CreateProjectSource(project_id=project_id, **data)
@@ -74,7 +76,7 @@ class SourceController(Controller):
 
     @get("/{source_id:uuid}")
     async def get_source_details(
-        self, project_id: str, source_id: UUID
+        self, project_id: FromPath[str], source_id: FromPath[UUID]
     ) -> SingleResponse[ProjectSource]:
         """Gets the full details of a single source, including its raw_content."""
         logger.debug(f"Getting details for source {source_id}")
@@ -87,7 +89,7 @@ class SourceController(Controller):
 
     @post("/test-selectors")
     async def test_project_source_selectors(
-        self, data: TestSelectorsPayload = Body()
+        self, data: JSONBody[TestSelectorsPayload]
     ) -> TestSelectorsResult:
         """Tests CSS selectors against a URL and returns the extracted links."""
         logger.debug(f"Testing selectors for URL: {data.url}")
@@ -142,7 +144,7 @@ class SourceController(Controller):
 
     @patch("/{source_id:uuid}")
     async def update_source(
-        self, source_id: UUID, data: UpdateProjectSource = Body()
+        self, source_id: FromPath[UUID], data: JSONBody[UpdateProjectSource]
     ) -> SingleResponse[ProjectSource]:
         logger.debug(f"Updating source {source_id}")
         source = await update_project_source(source_id, data)
@@ -151,13 +153,13 @@ class SourceController(Controller):
         return SingleResponse(data=source)
 
     @delete("/{source_id:uuid}")
-    async def delete_source(self, source_id: UUID) -> None:
+    async def delete_source(self, source_id: FromPath[UUID]) -> None:
         logger.debug(f"Deleting source {source_id}")
         await delete_project_source(source_id)
 
     @post("/delete-bulk")
     async def delete_sources_bulk(
-        self, project_id: str, data: BulkDeleteSourcesPayload = Body()
+        self, project_id: FromPath[str], data: JSONBody[BulkDeleteSourcesPayload]
     ) -> None:
         """Deletes multiple sources for a project in a single request."""
         logger.debug(

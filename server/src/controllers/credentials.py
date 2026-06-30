@@ -14,7 +14,7 @@ from db.credentials import (
 )
 from litestar import Controller, get, post, patch, delete
 from litestar.exceptions import NotFoundException
-from litestar.params import Body
+from litestar.params import FromPath, JSONBody
 
 from logging_config import get_logger
 
@@ -26,7 +26,7 @@ class CredentialsController(Controller):
 
     @post("/")
     async def create_new_credential(
-        self, data: CreateCredential = Body()
+        self, data: JSONBody[CreateCredential]
     ) -> SingleResponse[Credential]:
         logger.debug(f"Creating credential {data.name}")
         credential = await create_credential(data)
@@ -39,7 +39,7 @@ class CredentialsController(Controller):
 
     @get("/{credential_id:uuid}")
     async def get_credential_details(
-        self, credential_id: UUID
+        self, credential_id: FromPath[UUID]
     ) -> SingleResponse[Credential]:
         logger.debug(f"Retrieving credential {credential_id}")
         credential = await get_credential(credential_id)
@@ -49,7 +49,7 @@ class CredentialsController(Controller):
 
     @patch("/{credential_id:uuid}")
     async def update_existing_credential(
-        self, credential_id: UUID, data: UpdateCredential = Body()
+        self, credential_id: FromPath[UUID], data: JSONBody[UpdateCredential]
     ) -> SingleResponse[Credential]:
         logger.debug(f"Updating credential {credential_id}")
         credential = await update_credential(credential_id, data)
@@ -58,6 +58,8 @@ class CredentialsController(Controller):
         return SingleResponse(data=credential)
 
     @delete("/{credential_id:uuid}")
-    async def delete_existing_credential(self, credential_id: UUID) -> None:
+    async def delete_existing_credential(
+        self, credential_id: FromPath[UUID]
+    ) -> None:
         logger.debug(f"Deleting credential {credential_id}")
         await delete_credential(credential_id)

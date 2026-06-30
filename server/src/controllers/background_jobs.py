@@ -1,7 +1,7 @@
 from uuid import UUID
 from litestar import Controller, get, post
 from litestar.exceptions import NotFoundException, HTTPException
-from litestar.params import Body
+from litestar.params import FromPath, FromQuery, JSONBody
 from pydantic import BaseModel, Field
 from typing import Optional, List
 
@@ -68,14 +68,14 @@ class BackgroundJobController(Controller):
 
     @get("/")
     async def list_jobs(
-        self, limit: int = 50, offset: int = 0
+        self, limit: FromQuery[int] = 50, offset: FromQuery[int] = 0
     ) -> PaginatedResponse[BackgroundJob]:
         """List all background jobs with pagination."""
         logger.debug("Listing all background jobs")
         return await db_list_background_jobs_paginated(limit, offset)
 
     @get("/{job_id:uuid}")
-    async def get_job(self, job_id: UUID) -> SingleResponse[BackgroundJob]:
+    async def get_job(self, job_id: FromPath[UUID]) -> SingleResponse[BackgroundJob]:
         """Retrieve a single background job by its ID."""
         logger.debug(f"Retrieving job {job_id}")
         job = await db_get_background_job(job_id)
@@ -85,7 +85,7 @@ class BackgroundJobController(Controller):
 
     @get("/latest")
     async def get_latest_job(
-        self, project_id: str, task_name: TaskName
+        self, project_id: FromQuery[str], task_name: FromQuery[TaskName]
     ) -> SingleResponse[BackgroundJob]:
         """Retrieve the latest job for a project by task name."""
         logger.debug(
@@ -99,7 +99,9 @@ class BackgroundJobController(Controller):
         return SingleResponse(data=job)
 
     @post("/{job_id:uuid}/cancel")
-    async def cancel_job(self, job_id: UUID) -> SingleResponse[BackgroundJob]:
+    async def cancel_job(
+        self, job_id: FromPath[UUID]
+    ) -> SingleResponse[BackgroundJob]:
         """Request cancellation of a running or pending job."""
         async with (await get_db_connection()).transaction() as tx:
             logger.debug(f"Cancelling job {job_id}")
@@ -133,7 +135,7 @@ class BackgroundJobController(Controller):
 
     @post("/discover-and-crawl")
     async def create_discover_and_crawl_job(
-        self, data: CreateJobForSourcePayload = Body()
+        self, data: JSONBody[CreateJobForSourcePayload]
     ) -> SingleResponse[BackgroundJob]:
         """Create a job to discover sub-sources and crawl for content links."""
         async with (await get_db_connection()).transaction() as tx:
@@ -171,7 +173,7 @@ class BackgroundJobController(Controller):
 
     @post("/confirm-links")
     async def create_confirm_links_job(
-        self, data: ConfirmLinksJobPayload = Body()
+        self, data: JSONBody[ConfirmLinksJobPayload]
     ) -> SingleResponse[BackgroundJob]:
         """Create a job to confirm and save links for a project."""
         async with (await get_db_connection()).transaction() as tx:
@@ -192,7 +194,7 @@ class BackgroundJobController(Controller):
 
     @post("/process-project-entries")
     async def create_process_project_entries_job(
-        self, data: ProcessEntriesJobPayload = Body()
+        self, data: JSONBody[ProcessEntriesJobPayload]
     ) -> SingleResponse[BackgroundJob]:
         """Create a job to process all pending links for a project."""
         async with (await get_db_connection()).transaction() as tx:
@@ -215,7 +217,7 @@ class BackgroundJobController(Controller):
 
     @post("/generate-search-params")
     async def create_generate_search_params_job(
-        self, data: CreateJobForProjectPayload = Body()
+        self, data: JSONBody[CreateJobForProjectPayload]
     ) -> SingleResponse[BackgroundJob]:
         """Create a job to generate search parameters for a project."""
         async with (await get_db_connection()).transaction() as tx:
@@ -238,7 +240,7 @@ class BackgroundJobController(Controller):
 
     @post("/rescan-links")
     async def create_rescan_links_job(
-        self, data: CreateJobForSourcePayload = Body()
+        self, data: JSONBody[CreateJobForSourcePayload]
     ) -> SingleResponse[BackgroundJob]:
         """Create a job to rescan links for specific sources."""
         logger.debug(f"Creating rescan_links job for sources {data.source_ids}")
@@ -254,7 +256,7 @@ class BackgroundJobController(Controller):
 
     @post("/fetch-content")
     async def create_fetch_content_job(
-        self, data: CreateJobForSourcePayload = Body()
+        self, data: JSONBody[CreateJobForSourcePayload]
     ) -> SingleResponse[BackgroundJob]:
         """Create a job to fetch and cache content for sources."""
         logger.debug(f"Creating fetch_source_content job for sources {data.source_ids}")
@@ -269,7 +271,7 @@ class BackgroundJobController(Controller):
 
     @post("/generate-character")
     async def create_generate_character_job(
-        self, data: CreateGenerateCharacterJobPayload = Body()
+        self, data: JSONBody[CreateGenerateCharacterJobPayload]
     ) -> SingleResponse[BackgroundJob]:
         """Create a job to generate a character card."""
         logger.debug(
@@ -286,7 +288,7 @@ class BackgroundJobController(Controller):
 
     @post("/regenerate-field")
     async def create_regenerate_field_job(
-        self, data: CreateJobForRegenerateCharacterFieldPayload = Body()
+        self, data: JSONBody[CreateJobForRegenerateCharacterFieldPayload]
     ) -> SingleResponse[BackgroundJob]:
         """Create a job to regenerate a single field of a character card."""
 

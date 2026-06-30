@@ -1,7 +1,7 @@
 from litestar import Controller, get, post, patch, delete
 from litestar.exceptions import NotFoundException
 from typing import Dict
-from litestar.params import Body
+from litestar.params import FromPath, FromQuery, JSONBody
 
 from logging_config import get_logger
 from db.global_templates import (
@@ -44,7 +44,7 @@ class GlobalTemplateController(Controller):
 
     @post("/")
     async def create_global_template(
-        self, data: CreateGlobalTemplate = Body()
+        self, data: JSONBody[CreateGlobalTemplate]
     ) -> SingleResponse[GlobalTemplate]:
         """Create a new global template."""
         logger.debug(f"Creating global template {data.id}")
@@ -53,7 +53,7 @@ class GlobalTemplateController(Controller):
 
     @get("/")
     async def list_global_templates(
-        self, limit: int = 50, offset: int = 0
+        self, limit: FromQuery[int] = 50, offset: FromQuery[int] = 0
     ) -> PaginatedResponse[GlobalTemplate]:
         """List all global templates with pagination."""
         logger.debug("Listing all global templates")
@@ -61,7 +61,7 @@ class GlobalTemplateController(Controller):
 
     @get("/{template_id:str}")
     async def get_global_template(
-        self, template_id: str
+        self, template_id: FromPath[str]
     ) -> SingleResponse[GlobalTemplate]:
         """Retrieve a single global template by its ID."""
         logger.debug(f"Retrieving global template {template_id}")
@@ -72,7 +72,7 @@ class GlobalTemplateController(Controller):
 
     @patch("/{template_id:str}")
     async def update_global_template(
-        self, template_id: str, data: UpdateGlobalTemplate = Body()
+        self, template_id: FromPath[str], data: JSONBody[UpdateGlobalTemplate]
     ) -> SingleResponse[GlobalTemplate]:
         """Update a global template."""
         logger.debug(f"Updating global template {template_id}")
@@ -82,7 +82,7 @@ class GlobalTemplateController(Controller):
         return SingleResponse(data=template)
 
     @delete("/{template_id:str}")
-    async def delete_global_template(self, template_id: str) -> None:
+    async def delete_global_template(self, template_id: FromPath[str]) -> None:
         """Delete a global template."""
         logger.debug(f"Deleting global template {template_id}")
         await db_delete_global_template(template_id)
