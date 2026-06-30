@@ -4,7 +4,7 @@
 
 ```bash
 uv venv --python 3.10
-uv pip install -r requirements.txt
+uv pip install -r requirements.lock.txt
 ```
 
 ## Start the Application

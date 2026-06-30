@@ -5,8 +5,8 @@ set "SERVER_DIR=%ROOT_DIR%server"
 set "CLIENT_DIR=%ROOT_DIR%client"
 pushd "%ROOT_DIR%"
 
-if not exist "%SERVER_DIR%\requirements.txt" (
-    echo ERROR: Could not find "%SERVER_DIR%\requirements.txt".
+if not exist "%SERVER_DIR%\requirements.lock.txt" (
+    echo ERROR: Could not find "%SERVER_DIR%\requirements.lock.txt".
     echo Please run this script from the Lorecard project folder.
     pause
     exit /b 1
@@ -110,7 +110,7 @@ if not exist "%SERVER_DIR%\.venv" (
     if errorlevel 1 (popd & echo ERROR: Failed to create venv. Is Python 3.10 installed?& pause & exit /b 1)
     popd
 )
-pushd "%SERVER_DIR%" && uv pip install -r requirements.txt
+pushd "%SERVER_DIR%" && uv pip install -r requirements.lock.txt
 if errorlevel 1 (popd & echo ERROR: Failed to install Python dependencies.& pause & exit /b 1)
 popd
 echo      Python dependencies are up to date.

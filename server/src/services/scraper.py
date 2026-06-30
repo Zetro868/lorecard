@@ -1,6 +1,6 @@
 from typing import Literal
 from html import escape
-from html_to_markdown import convert_to_markdown
+from html_to_markdown import convert as convert_html_to_markdown
 import httpx
 from bs4 import BeautifulSoup
 from bs4.element import Tag as Bs4Tag  # type: ignore
@@ -121,7 +121,7 @@ def clean_html(html_content: str) -> str:
 
 def html_to_markdown(html_content: str) -> str:
     cleaned_html_str = clean_html(html_content)
-    return convert_to_markdown(cleaned_html_str).strip()
+    return convert_html_to_markdown(cleaned_html_str).content.strip()
 
 
 def get_fandom_api_url_and_page_title(url: str) -> tuple[str, str] | None:

@@ -35,9 +35,9 @@ ENV APP_VERSION=${APP_VERSION}
 # Install uv, the Python package manager
 RUN pip install uv
 
-# Copy server dependency file and install dependencies
-COPY server/requirements.txt ./server/
-RUN cd server && uv pip install --system --no-cache-dir -r requirements.txt
+# Copy server dependency files and install locked dependencies
+COPY server/requirements.txt server/requirements.lock.txt ./server/
+RUN cd server && uv pip install --system --no-cache-dir -r requirements.lock.txt
 
 # Copy the server source code
 COPY server/ ./server/
