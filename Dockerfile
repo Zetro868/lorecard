@@ -8,7 +8,7 @@ RUN npm install -g pnpm
 
 # Copy client dependency files and install dependencies to leverage Docker layer caching
 COPY client/package.json client/pnpm-lock.yaml* ./client/
-RUN cd client && pnpm install --frozen-lockfile
+RUN cd client && pnpm config set strict-dep-builds false && pnpm install --frozen-lockfile
 
 # Copy the rest of the client source code and build the application
 COPY client/ ./client/
